@@ -4,25 +4,27 @@ import re
 import requests
 from bs4 import BeautifulSoup
 
-# Links for verification
+# Target URLs for web monitoring
 URLS = [
     "https://trnita.scioskola.cz/aktuality",
     "https://stredni-brno.scioskola.cz/aktuality/",
     "https://www.gml.cz/kalendar"
 ]
 
-# Telegram settings (taken from GitHub secrets)
+# Fetch Telegram credentials from GitHub repository secrets
 TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN")
 TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID")
 HISTORY_FILE = "history.json"
 
 def load_history():
+    """Loads previously found events from the local JSON file to prevent duplicates."""
     if os.path.exists(HISTORY_FILE):
         with open(HISTORY_FILE, "r", encoding="utf-8") as f:
             return json.load(f)
     return []
 
 def save_history(history):
+    """Saves updated event keys back to the history JSON file."""
     with open(HISTORY_FILE, "w", encoding="utf-8") as f:
         json.dump(history, f, ensure_ascii=False, indent=4)
 
@@ -36,11 +38,9 @@ def send_telegram(message):
     token = str(TELEGRAM_TOKEN).strip()
     chat_id = str(TELEGRAM_CHAT_ID).strip()
     
-    # Split the URL parts to bypass GitHub Actions automatic masking bugs
-    base_url = "https://telegram.org"
-    bot_prefix = "bot"
-    endpoint = "/sendMessage"
-    full_url = f"{base_url}{bot_prefix}{token}{endpoint}"
+    # Split the request address parameters into parts to prevent GitHub masking bugs
+    api_domain = "api.telegram.org"
+    request_link = f"https://{api_domain}/bot{token}/sendMessage"
     
     payload = {
         "chat_id": chat_id, 
@@ -49,69 +49,60 @@ def send_telegram(message):
     }
     
     try:
-        # Execute the HTTP POST request to Telegram API
-        response = requests.post(full_url, json=payload, timeout=10)
+        # Execute the HTTP POST request to Telegram API using the new variable name
+        response = requests.post(request_link, json=payload, timeout=10)
         print(f"Telegram response status code: {response.status_code}")
         
-        # If Telegram returns an explicit error code (e.g., 400 or 401)
         if response.status_code != 200:
             print(f"Telegram API Error Details: {response.text}")
             
     except Exception as e:
         print(f"Failed to communicate with Telegram API: {e}")
-    
-    try:
-        response = requests.post(url, json=payload, timeout=10)
-        # CRITICAL DIAGNOSTIC LINE: Prints the exact reason why Telegram might block the message
-        print(f"Telegram response: Status {response.status_code}, Text: {response.text}")
-    except Exception as e:
-        print(f"Failed to communicate with Telegram API: {e}")
 
 def main():
-    # history = load_history()
-    history = []  # Temporarily ignore history database for debugging
-    new_history = list(history)
+    # Force empty history database loop to trigger diagnostic resend
+    history = []  
+    new_history = list(load_history())
     has_updates = False
 
     for url in URLS:
         try:
-            print(f"Проверяем: {url}")
+            print(f"Scanning URL: {url}")
             headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
             response = requests.get(url, headers=headers, timeout=15)
+            
             if response.status_code != 200:
-                print(f"Ошибка доступа к {url}: статус {response.status_code}")
+                print(f"Access error for {url}: Status code {response.status_code}")
                 continue
                 
             soup = BeautifulSoup(response.text, "html.parser")
             
-            # Search for all titles and text blocks, where a phrase 
-            # 'otevřených dveří' exists, including 'Den...', и 'Dny...'
-            found_items = soup.find_all(text=re.compile(r"otevřených dveří", re.IGNORECASE))
+            # Replaced 'text=' with 'string=' to eliminate the DeprecationWarning completely
+            found_items = soup.find_all(string=re.compile(r"otevřených dveří", re.IGNORECASE))
             
             for item in found_items:
                 clean_text = item.strip()
-                # Ignore too short tech coincidences
                 if len(clean_text) < 10:
                     continue
                 
-                # Create a unique key (link + text)
                 unique_key = f"{url} | {clean_text}"
                 
-                if unique_key not in history:
-                    print(f"Найдено новое событие: {clean_text}")
+                # Check against the actual original records
+                if unique_key not in new_history:
+                    print(f"New event discovered: {clean_text}")
                     msg = f"🔔 *Найден День открытых дверей!*\n\n📝 {clean_text}\n\n🔗 [Перейти на сайт]({url})"
                     send_telegram(msg)
                     new_history.append(unique_key)
                     has_updates = True
                     
         except Exception as e:
-            print(f"Error while processing {url}: {e}")
+            print(f"Error while parsing {url}: {e}")
 
     if has_updates:
         save_history(new_history)
-        print("History updated.")
+        print("History database updated successfully.")
     else:
-        print("No new events found.")
+        print("No new events matched the filtering criteria.")
 
 if __name__ == "__main__":
     main()
