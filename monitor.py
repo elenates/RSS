@@ -4,13 +4,13 @@ import re
 import requests
 from bs4 import BeautifulSoup
 
-# Ссылки для проверки
+# Links for verification
 URLS = [
     "https://trnita.scioskola.cz/aktuality",
     "https://stredni-brno.scioskola.cz/aktuality/"
 ]
 
-# Настройки Telegram (берутся из секретов GitHub)
+# Telegram settings (taken from GitHub secrets)
 TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN")
 TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID")
 HISTORY_FILE = "history.json"
