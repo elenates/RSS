@@ -32,14 +32,33 @@ def send_telegram(message):
         print("Error: Telegram credentials are not configured in GitHub Secrets!")
         return
         
-    # Clean the tokens to avoid potential GitHub logging mask issues
+    # Clean the tokens to remove any accidental spaces
     token = str(TELEGRAM_TOKEN).strip()
-    url = f"https://telegram.org{token}/sendMessage"
+    chat_id = str(TELEGRAM_CHAT_ID).strip()
+    
+    # Split the URL parts to bypass GitHub Actions automatic masking bugs
+    base_url = "https://telegram.org"
+    bot_prefix = "bot"
+    endpoint = "/sendMessage"
+    full_url = f"{base_url}{bot_prefix}{token}{endpoint}"
+    
     payload = {
-        "chat_id": str(TELEGRAM_CHAT_ID).strip(), 
+        "chat_id": chat_id, 
         "text": message, 
         "parse_mode": "Markdown"
     }
+    
+    try:
+        # Execute the HTTP POST request to Telegram API
+        response = requests.post(full_url, json=payload, timeout=10)
+        print(f"Telegram response status code: {response.status_code}")
+        
+        # If Telegram returns an explicit error code (e.g., 400 or 401)
+        if response.status_code != 200:
+            print(f"Telegram API Error Details: {response.text}")
+            
+    except Exception as e:
+        print(f"Failed to communicate with Telegram API: {e}")
     
     try:
         response = requests.post(url, json=payload, timeout=10)
