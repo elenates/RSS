@@ -27,12 +27,26 @@ def save_history(history):
         json.dump(history, f, ensure_ascii=False, indent=4)
 
 def send_telegram(message):
+    """Sends a notification message to the specified Telegram chat/channel."""
     if not TELEGRAM_TOKEN or not TELEGRAM_CHAT_ID:
-        print("Ошибка: Не настроены токены Telegram!")
+        print("Error: Telegram credentials are not configured in GitHub Secrets!")
         return
+        
+    # Clean the tokens to avoid potential GitHub logging mask issues
     token = str(TELEGRAM_TOKEN).strip()
     url = f"https://telegram.org{token}/sendMessage"
-    payload = {"chat_id": str(TELEGRAM_CHAT_ID).strip(), "text": message, "parse_mode": "Markdown"}
+    payload = {
+        "chat_id": str(TELEGRAM_CHAT_ID).strip(), 
+        "text": message, 
+        "parse_mode": "Markdown"
+    }
+    
+    try:
+        response = requests.post(url, json=payload, timeout=10)
+        # CRITICAL DIAGNOSTIC LINE: Prints the exact reason why Telegram might block the message
+        print(f"Telegram response: Status {response.status_code}, Text: {response.text}")
+    except Exception as e:
+        print(f"Failed to communicate with Telegram API: {e}")
 
 def main():
     history = load_history()
