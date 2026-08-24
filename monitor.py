@@ -7,7 +7,8 @@ from bs4 import BeautifulSoup
 # Links for verification
 URLS = [
     "https://trnita.scioskola.cz/aktuality",
-    "https://stredni-brno.scioskola.cz/aktuality/"
+    "https://stredni-brno.scioskola.cz/aktuality/",
+    "https://www.gml.cz/kalendar"
 ]
 
 # Telegram settings (taken from GitHub secrets)
