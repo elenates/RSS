@@ -49,7 +49,8 @@ def send_telegram(message):
         print(f"Failed to communicate with Telegram API: {e}")
 
 def main():
-    history = load_history()
+    # history = load_history()
+    history = []  # Temporarily ignore history database for debugging
     new_history = list(history)
     has_updates = False
 
