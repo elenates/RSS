@@ -30,9 +30,9 @@ def send_telegram(message):
     if not TELEGRAM_TOKEN or not TELEGRAM_CHAT_ID:
         print("Ошибка: Не настроены токены Telegram!")
         return
-    url = f"https://telegram.org{TELEGRAM_TOKEN}/sendMessage"
-    payload = {"chat_id": TELEGRAM_CHAT_ID, "text": message, "parse_mode": "Markdown"}
-    requests.post(url, json=payload)
+    token = str(TELEGRAM_TOKEN).strip()
+    url = f"https://telegram.org{token}/sendMessage"
+    payload = {"chat_id": str(TELEGRAM_CHAT_ID).strip(), "text": message, "parse_mode": "Markdown"}
 
 def main():
     history = load_history()
