@@ -8,7 +8,8 @@ from bs4 import BeautifulSoup
 URLS = [
     "https://trnita.scioskola.cz/aktuality",
     "https://stredni-brno.scioskola.cz/aktuality/",
-    "https://www.gml.cz/kalendar"
+    "https://www.gml.cz/kalendar",
+    "https://www.mgbrno.cz/aktuality/"
 ]
 
 # Fetch Telegram credentials from GitHub repository secrets
