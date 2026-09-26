@@ -7,7 +7,7 @@ from bs4 import BeautifulSoup
 # Target URLs for web monitoring
 URLS = [
     "https://trnita.scioskola.cz/aktuality",
-    "https://stredni-brno.scioskola.cz/aktuality/",
+    "https://medlanky-stredni.scioskola.cz/aktuality",
     "https://www.gml.cz/kalendar",
     "https://www.mgbrno.cz/aktuality/"
 ]
